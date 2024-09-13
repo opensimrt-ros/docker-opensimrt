@@ -12,7 +12,7 @@ To use it you need to have [docker installed](https://docs.docker.com/get-docker
 
 Clone it like this to get everything:
 
-    git clone --recursive -b devel-all git@github.com:opensimrt-ros/docker-opensimrt opensimrt
+    git clone --recursive -b main git@github.com:opensimrt-ros/docker-opensimrt
 
 
 #### Everything below here is old. needs to be reviewed and updated.
