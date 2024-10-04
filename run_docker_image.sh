@@ -51,16 +51,18 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		nmcli con up "${CONNECTION_NAME}"
 	fi
 	EXTRA_OPTIONS=""
-	if [ "$IS_ROOTLESS" = true ]; then
+	if [ "$IS_ROOTLESS" = true ] || [ "$USE_HOST_NETWORK" = true ]; then
+
 		EXTRA_OPTIONS=--network=host
-	fi
-	#not sure if I need to expose these ports, but it is working
-	docker run --rm -it $EXTRA_OPTIONS --network=host \
-		-p 9000:9000/udp \
+	else
+		EXTRA_OPTIONS=-p 9000:9000/udp \
 		-p 8001:8001/udp \
 		-p 10000:10000/udp \
 		-p 9999:9999 \
-		-p 1030:1030/udp \
+		-p 1030:1030/udp
+	fi
+	#not sure if I need to expose these ports, but it is working
+	docker run --rm -it $EXTRA_OPTIONS \
 		-e WINDOW_TITLE="${THIS_WINDOW_TITLE}" \
 		-e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/.docker.xauth:/tmp/.docker.xauth:rw -e XAUTHORITY=/tmp/.docker.xauth \
 		--name=$NAME \

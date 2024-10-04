@@ -20,15 +20,20 @@ fi
 ## I should get this from options//
 DOCKER_USER_NAME=rosopensimrt
 
+## if we want screen, sound and dev, this is unavoidable.
+# maybe when they fix the way volumes are mounted this can all be removed
+echo "Changing userid. This takes a long time..."
+usermod -u ${OUTSIDEY_USER_ID} $DOCKER_USER_NAME
+groupmod -g ${OUTSIDEY_USER_ID} $DOCKER_USER_NAME
+
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR
-gosu $DOCKER_USER_NAME:$DOCKER_USER_NAME dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+gosu $OUTSIDEY_USER_ID dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
 #dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+
+## This doesn't work. I mean, it works, but not completely.
 
 # inspired by: https://github.com/redis/docker-library-redis/blob/master/Dockerfile.template& https://github.com/redis/docker-library-redis/blob/master/docker-entrypoint.sh
 
-#maybe we can use just the second one for docker --user ?
-
-#usermod -u ${OUTSIDEY_USER_ID} $DOCKER_USER_NAME
 
 ACTUAL_USER_ID=$OUTSIDEY_USER_ID
 if [ "$IS_ROOTLESS" = "true" ]; then

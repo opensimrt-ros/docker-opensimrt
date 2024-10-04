@@ -2,6 +2,10 @@ ARG start_with_image=ros:noetic-ros-base
 ARG IS_ROOTLESS=false
 FROM ${start_with_image} AS stage1
 ARG IS_ROOTLESS
+ARG user=osruser1
+ARG group=osruser1
+ARG uid=1000
+ARG gid=1000
 ENV IS_ROOTLESS=${IS_ROOTLESS}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -11,6 +15,7 @@ RUN apt-get update && apt-get install \
 	curl \
 	freeglut3-dev \
 	git \
+	gosu \
 	libxi-dev \
 	libxmu-dev \
 	liblapack-dev \
@@ -44,7 +49,6 @@ RUN apt-get install \
 	ros-noetic-rosbridge-server \
 	--yes && rm -rf /var/lib/apt/lists/*
 
-
 ADD scripts/configure_sound.bash /tmp/conf_alsa.bash
 RUN /tmp/conf_alsa.bash
 
@@ -63,9 +67,13 @@ RUN  wget https://sourceforge.net/projects/dependencies/files/vicon/ViconDataStr
 
 #RUN echo "I use this to make it get stuff from git again"
 
-RUN git clone https://github.com/mysablehats/OpenSimRT_data.git /srv/data
+RUN git clone --depth=1 https://github.com/mysablehats/OpenSimRT_data.git /srv/data
 
 FROM stage1 AS stage2
+ARG user=osruser1
+ARG group=osruser1
+ARG uid=1000
+ARG gid=1000
 
 ADD scripts/ximu.bash /bin
 RUN /bin/ximu.bash
@@ -89,34 +97,15 @@ RUN /bin/ximu.bash
 ## also need pupil and nest for eye_tracker
 RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && python3 -m pip install --upgrade pynvim && \
 	pip3 install --upgrade pip && hash -r && pip3 install --upgrade pip && pip3 install protobuf==3.20.1 mock numpy pupil-labs-realtime-api nest_asyncio && \
-	pip3 install --ignore-installed PyYAML==5.3 
+	pip3 install --ignore-installed PyYAML==5.3 && \
+	pip3 install timeout_decorator libtmux sympy tqdm pandas
 
-RUN echo "reinstall neovim"
 ADD vim /nvim
 ADD scripts/vim_install.bash /nvim
 RUN /nvim/vim_install.bash
 ADD tmux/.tmux.conf /etc/tmux
 
-RUN echo "I use this to make it get stuff from git again"
-
-# Set user and group
-ARG user=osruser1
-ARG group=osruser1
-ARG uid=1000
-ARG gid=1000
-#ARG VIDEOGROUP=${VIDEOGROUP}
-#RUN groupadd -g $VIDEOGROUP video
-RUN groupadd -g ${gid} ${group}
-
-## opensimrtuser)
-## generate other password with $ openssl passwd -6 "somepassword"
-RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
-# Switch to user
-
-ENV XDG_RUNTIME_DIR=/run/user/"${uid}"
-
 WORKDIR /catkin_opensim/src
-
 
 ENV OPENSIMRTDIR=opensimrt_core
 
@@ -128,11 +117,10 @@ RUN git clone https://github.com/opensimrt-ros/opensimrt_core.git ./$OPENSIMRTDI
 RUN sed 's@~@/opt@' ./$OPENSIMRTDIR/.github/workflows/env_variables >> /etc/profile.d/opensim_envs.sh
 
 RUN git clone https://github.com/opensimrt-ros/opensimrt_msgs.git -b devel && echo "pulling opensimrt_msgs again"
-#RUN echo "I use this to make it get stuff from git again"
 
 RUN git clone https://github.com/opensimrt-ros/opensimrt_bridge.git -b devel && echo "pulling opensimrt_bridge again"
 
-ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages/:$PYTHONPATH
+ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages/
 
 #I dont think this variable is set yet
 ENV OPENSIM_PYTHON_DIR=/usr/local/lib/python3.8/site-packages
@@ -146,34 +134,35 @@ RUN sed -i "s/\(subprocess.Popen([^)]*\)/\1,universal_newlines=True/" /opt/ros/n
 ADD scripts/realsense_install.bash /usr/sbin/
 RUN bash /usr/sbin/realsense_install.bash
 
-RUN mkdir -p -m 0700 /var/run/dbus && chown ${uid}:${gid} /var/run/dbus && chown ${uid}:${gid} -R /catkin_opensim
-
-USER ${uid}
-
-ENV HOME_DIR=/home/${user}
-ADD scripts/vim_configure.bash ${HOME_DIR}/
-RUN ~/vim_configure.bash
-
-ADD tmux/.tmux.conf ${HOME_DIR}/
-
 ADD scripts/build_opensimrt.bash /bin/catkin_build_opensimrt.bash
 
 ADD scripts/build_catkin_ws.bash /bin/catkin_build_ws.bash
 
-RUN printf "source /catkin_ws/devel/setup.bash\nsource /catkin_opensim/devel/setup.bash" >> ~/.bash_history
-
-###############################################################################################################################################################################################################################################
 FROM stage2 AS stage3
+## just builds opensimrt
+ARG user=osruser1
+ARG group=osruser1
+ARG uid=1000
+ARG gid=1000
+
 WORKDIR /catkin_opensim/src/opensimrt_core
 RUN git pull
 WORKDIR /catkin_opensim
-#RUN . /opt/ros/noetic/setup.sh && . /etc/profile.d/opensim_envs.sh && catkin_make ## it's not a session, so it wont load the exports...
 RUN /bin/catkin_build_opensimrt.bash
 
-WORKDIR /catkin_opensim/src
+ADD scripts/banners /etc/banners
+ADD scripts/banners/welcome.sh /etc/profile.d/welcome.sh
 
 FROM stage3 AS final
+# Set user and group
+ARG user=osruser1
+ARG group=osruser1
+ARG uid=1000
+ARG gid=1000
 
+ENV XDG_RUNTIME_DIR=/run/user/"${uid}"
+
+## sets exposed ports
 #EXPOSE 8080/udp
 #EXPOSE 8080/tcp
 
@@ -188,6 +177,26 @@ EXPOSE 7000/tcp
 #port for insoles
 EXPOSE 9999
 
+#ARG VIDEOGROUP=${VIDEOGROUP}
+#RUN groupadd -g $VIDEOGROUP video
+RUN groupadd -g ${gid} ${group}
+
+## opensimrtuser)
+## generate other password with $ openssl passwd -6 "somepassword"
+RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
+# Switch to user
+RUN chown ${uid}:${gid} -R /catkin_opensim
+
+USER ${uid}
+
+ENV HOME_DIR=/home/${user}
+ADD scripts/vim_configure.bash ${HOME_DIR}/
+RUN ~/vim_configure.bash
+
+ADD tmux/.tmux.conf ${HOME_DIR}/
+
+RUN printf "source /catkin_ws/devel/setup.bash\nsource /catkin_opensim/devel/setup.bash" >> ~/.bash_history
+
 ##BLING
 ADD scripts/bash_git.bash ${HOME_DIR}/.bash_git
 ADD scripts/bashbar.bash  ${HOME_DIR}/.bash_bar
@@ -199,19 +208,11 @@ RUN echo "source ~/.bash_git" >> ~/.bashrc && \
 
 ADD scripts/create_bashrcs.bash ${HOME_DIR}/.create_bashrcs.sh
 RUN bash ~/.create_bashrcs.sh
-#ADD tmux/ /usr/local/bin # moved to a volume
-
-ADD scripts/catkin.sh /bin/first_time_catkin_builder.sh
 
 ## gets latest local environment
 ADD scripts/set_local_branches.bash /bin/set_local_branches.bash
 #ADD scripts/get_latest_local_branches.bash /bin/get_latest_local_branches.bash
-WORKDIR /catkin_ws
-#RUN apt remove python -y
-#RUN apt install cowsay -y
-
 RUN rosdep update
-RUN pip3 install timeout_decorator libtmux sympy tqdm pandas
 
 WORKDIR ${HOME_DIR}
 RUN git clone https://github.com/mrocklin/multipolyfit.git \
@@ -220,9 +221,6 @@ RUN git clone https://github.com/mrocklin/multipolyfit.git \
 
 WORKDIR /catkin_ws
 
-ADD scripts/banners /etc/banners
-ADD scripts/banners/welcome.sh /etc/profile.d/welcome.sh
-
 USER root
 RUN set -eux; \
 	apt-get update; \
@@ -230,6 +228,9 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*; \
 # verify that the binary works
 	gosu nobody true
+
+RUN mkdir -p -m 0700 /var/run/dbus        && chown ${uid}:${gid} /var/run/dbus &&\
+    mkdir -p -m 0700 /var/run/user/${uid} && chown ${uid}:${gid} /var/run/user/${uid} 
 
 ADD scripts/entrypoint.sh /bin/entrypoint.sh 
 ENTRYPOINT [ "entrypoint.sh" ]
