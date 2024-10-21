@@ -3,7 +3,7 @@ source options.sh
 NAME=${1:-opensimrt_ros_}
 if [ -z "$2" ] || [ ! -d "$2" ]
   then
-    echo "No catkin workspace argument supplied or directory $2 does not exist . Not mounting anything"
+    log_warn "No catkin workspace argument supplied or directory $2 does not exist . Not mounting anything"
 
     THIS_WINDOW_TITLE="MAIN WINDOW DO NOT CLOSE!!!! $BRANCH"
 else
@@ -23,11 +23,11 @@ fi
 
 ##first 2 arguments need to be the name of the run instance and the catkin_ws to be mounted.
 if [ -n "$1" ]; then
-	echo "shifting NAME: $1"
+	log_info "shifting NAME: $1"
 	shift
 fi
 if [ -n "$1" ]; then
-	echo "shifting CATKIN_WS_DIR: $1"
+	log_info "shifting CATKIN_WS_DIR: $1"
 	shift
 fi
 
@@ -35,7 +35,7 @@ fi
 if [ -n "$1" ]; then
 	#RUN_COMMAND=$@
 	RUN_COMMAND="/bin/bash -l -c /catkin_ws/prediags.bash"
-	echo running command: $RUN_COMMAND
+	log_info running command: $RUN_COMMAND
 else
 	RUN_COMMAND="/bin/bash -l"
 fi
@@ -47,7 +47,7 @@ if [ "$(uname)" == "Darwin" ]; then
 	# Do something under Mac OS X platform
 	# I can only run in x86_64 systems, so I should also warn the person.
 	if [ "$(uname -m)" != "x86_64" ]; then
-		echo "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
+		log_warn "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
 		exit
 	fi
 	docker run --rm -it \
@@ -60,11 +60,11 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 
 	# I can only run in x86_64 systems, so I should also warn the person.
 	if [ "$(uname -m)" != "x86_64" ]; then
-		echo "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
+		log_warn "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
 		exit
 	fi
 	
-	echo $EXTRA_OPTIONS
+	log_debug $EXTRA_OPTIONS
 	docker run --rm -it $EXTRA_OPTIONS \
 		-e WINDOW_TITLE="${THIS_WINDOW_TITLE}" \
 		--name=$NAME \

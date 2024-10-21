@@ -35,6 +35,22 @@ USE_REALSENSE=true
 
 ####SETUP
 
+log_info()
+{
+	echo -e "\e[97m [INFO] [$EPOCHREALTIME]: $1 \e[0m"
+
+}
+log_warn()
+{
+	echo -e "\e[33m [WARN] [$EPOCHREALTIME]: $1 \e[0m"
+
+}
+log_debug()
+{
+	echo -e "\e[32m [DEBUG] [$EPOCHREALTIME]: $1 \e[0m"
+
+}
+
 IS_ROOTLESS=false
 # I think this is a linux only issue.
 DOCKER_DEAMON_PROCESS_OWNER=$(ps aux | grep [d]ockerd | awk '{print $1}')
@@ -48,7 +64,7 @@ if [ "$DOCKER_DEAMON_PROCESS_OWNER" != "root" ]; then
 	IS_ROOTLESS=true
 fi
 
-echo $IS_ROOTLESS
+log_debug IS_ROOTLESS=$IS_ROOTLESS
 
 USER_UID=$(id -u)
 
@@ -59,10 +75,10 @@ EXTRA_OPTIONS=""
 		# it doesnt seem to work if the bt dongle is already plugged in, so let's check for that
 		BT_INSERTED=$(lsusb -d $BT_DONGLE_VENDOR_ID)
 		if [[ $BT_INSERTED ]]; then
-			echo "Remove BT device before starting VM..."
+			log_info "Remove BT device before starting VM..."
 			exit 0
 		fi
-		echo "You can put the dongle after the android vm has started"
+		log_info "You can put the dongle after the android vm has started"
 		scripts/how_to_start_bt_androidx86_vm.py &
 	fi
 	
@@ -114,12 +130,12 @@ EXTRA_OPTIONS=""
 		for f in $FILES
 		do
 			if [ -e "$f" ]; then
-			#echo "Adding video device $f ..."
+			log_debug "Adding video device $f ..."
 			# take action on each file. $f store current file name
 				V4LDEVICES="--device=$f:$f $V4LDEVICES"
 			fi
 		done
-		#echo $V4LDEVICES
+		log_debug $V4LDEVICES
 		EXTRA_OPTIONS=${EXTRA_OPTIONS}"$V4LDEVICES "
 	fi
 
@@ -134,12 +150,11 @@ sanitize_tag() {
 BRANCH=$(sanitize_tag "$BRANCH_RAW")
 
 if [[ -z "$BRANCH" ]]; then
-	echo "In a detached head state, build tag will be set to latest."
+	log_warn "In a detached head state, build tag will be set to latest."
 	BRANCH=latest
 fi
 #VIDEOGROUP=$(getent group video | awk -F: '{print $3}')
 
 #DOCKER_IMAGE_NAME=rosopensimrt/opensim-rt:devel-all
 DOCKER_IMAGE_NAME=${USERNAME}/opensim-rt${SUFFIX}:$BRANCH 
-
 
