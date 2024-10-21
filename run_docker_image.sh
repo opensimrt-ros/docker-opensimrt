@@ -1,10 +1,26 @@
 #!/bin/bash
 source options.sh
 NAME=${1:-opensimrt_ros_}
-CATKIN_WS_DIR=${2:-$(pwd)/catkin_ws}
-mkdir -p $CATKIN_WS_DIR/devel
-mkdir -p $CATKIN_WS_DIR/build
-THIS_WINDOW_TITLE="MAIN WINDOW DO NOT CLOSE!!!! [$CATKIN_WS_DIR] $BRANCH"
+if [ -z "$2" ] || [ ! -d "$2" ]
+  then
+    echo "No catkin workspace argument supplied or directory $2 does not exist . Not mounting anything"
+
+    THIS_WINDOW_TITLE="MAIN WINDOW DO NOT CLOSE!!!! $BRANCH"
+else
+    CATKIN_WS_DIR="$(basename $2)"
+
+    #CATKIN_WS_DIR=${2:-$(pwd)/catkin_ws}
+    if [ "$CATKIN_WS_DIR" = catkin_ws ]; then
+    	CATKIN_WS_DIR=${CATKIN_WS_DIR}_2
+    fi
+    mkdir -p $CATKIN_WS_DIR/devel
+    mkdir -p $CATKIN_WS_DIR/build
+    THIS_WINDOW_TITLE="MAIN WINDOW DO NOT CLOSE!!!! [$CATKIN_WS_DIR] $BRANCH"
+    ## i cant make sense of this
+    #EXTRA_OPTIONS=${EXTRA_OPTIONS}" -v $2:/$CATKIN_WS_DIR "
+    EXTRA_OPTIONS=${EXTRA_OPTIONS}" -v $2:/catkin_ws "
+fi
+
 
 echo -en "\e]0;${THIS_WINDOW_TITLE}\a"
 
@@ -29,51 +45,15 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		exit
 	fi
 	
-
-	if [ "$USE_ANDROID_VM" = true ]; then #bash is weird...
-		#let's also run the vm for the android device
-		# it doesnt seem to work if the bt dongle is already plugged in, so let's check for that
-		if [[ $BT_INSERTED ]]; then
-			echo "Remove BT device before starting VM..."
-			exit 0
-		fi
-		echo "You can put the dongle after the android vm has started"
-		scripts/how_to_start_bt_androidx86_vm.py &
-	fi
-	## slightly better alternative, it was working, but stopped, going back to open everything
-	#	xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f /tmp/.docker.xauth nmerge -
-	xhost +local:docker
-
-	## remembers current ssid before creating hotspot
-	if [ "$USE_HOTSPOT" = true ]; then
-		## I actually need to grep it by the device, right, I am assuming your wlan dev has a w in its device name, hence the grep w, but it should be a variable..
-		myssid=$(nmcli -t -f name,device connection show --active | grep w | cut -d\: -f1)
-		nmcli con up "${CONNECTION_NAME}"
-	fi
-	EXTRA_OPTIONS=""
-	if [ "$IS_ROOTLESS" = true ]; then
-		EXTRA_OPTIONS=--network=host
-	fi
-	#not sure if I need to expose these ports, but it is working
-	docker run --rm -it $EXTRA_OPTIONS --network=host \
-		-p 9000:9000/udp \
-		-p 8001:8001/udp \
-		-p 10000:10000/udp \
-		-p 9999:9999 \
-		-p 1030:1030/udp \
+	echo $EXTRA_OPTIONS
+	docker run --rm -it $EXTRA_OPTIONS \
 		-e WINDOW_TITLE="${THIS_WINDOW_TITLE}" \
-		-e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/.docker.xauth:/tmp/.docker.xauth:rw -e XAUTHORITY=/tmp/.docker.xauth \
 		--name=$NAME \
-		--device=/dev/snd:/dev/snd \
-		--device=/dev/dri:/dev/dri $LINE \
-		-v $CATKIN_WS_DIR:/catkin_ws \
 		-v $(pwd)/Data:/srv/host_data \
 		-v $(pwd)/tmux:/usr/local/bin/tmux_session \
-		-v /run/user/${USER_UID}/pulse:/run/user/${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER}/pulse \
-		--volume /dev/bus/usb/$BUS/$PORT:/dev/bus/usb/$BUS/$PORT \
-		-e PULSE_SERVER=unix:/run/user/${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER}/pulse/native \
 		-e OUTSIDEY_USER_ID=${USER_UID} \
 		$DOCKER_IMAGE_NAME /bin/bash -l
+	## cleanup
 	if [ "$USE_HOTSPOT" = true ]; then
 		nmcli con down "${CONNECTION_NAME}"
 		nmcli con up $myssid

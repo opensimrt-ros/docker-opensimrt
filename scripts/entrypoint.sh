@@ -47,16 +47,24 @@ dirs_to_share=(
 cleanup()
 {
 	echo "attempting cleanup"
-	for some_dir in ${dirs_to_share[@]}; do
-		chown -R $OUTSIDEY_USER_ID:$OUTSIDEY_USER_ID $some_dir
+	for DIRECTORY in ${dirs_to_share[@]}; do
+		if [ -d "$DIRECTORY" ]; then
+  			echo "$DIRECTORY exists so i am changing its permissions."
+			chown -R --from=$DOCKER_USER_NAME:$DOCKER_USER_NAME  $OUTSIDEY_USER_ID:$OUTSIDEY_USER_ID $DIRECTORY
+		fi
 	done
 	echo "permissions reset to $ACTUAL_USER_ID! "
 }
 
 trap "cleanup" INT EXIT
 
-chown -R $DOCKER_USER_NAME:$DOCKER_USER_NAME /srv/host_data
-chown -R $DOCKER_USER_NAME:$DOCKER_USER_NAME /catkin_ws
+for DIRECTORY in ${dirs_to_share[@]}; do
+		if [ -d "$DIRECTORY" ]; then
+  			echo "$DIRECTORY exists so i am changing its permissions."
+			chown -R --from=$OUTSIDEY_USER_ID:$OUTSIDEY_USER_ID  $DOCKER_USER_NAME:$DOCKER_USER_NAME $DIRECTORY
+		fi
+	done
+
 
 ## Running passed command
 if [[ "$1" ]]; then

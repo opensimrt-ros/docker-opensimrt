@@ -61,9 +61,7 @@ RUN  wget https://sourceforge.net/projects/dependencies/files/oscpack/oscpack-ub
 RUN  wget https://sourceforge.net/projects/dependencies/files/vicon/ViconDataStreamSDK_1.7.1_96542h.tar.xz && \
         tar --no-same-owner -xvf ViconDataStreamSDK_1.7.1_96542h.tar.xz && rm ViconDataStreamSDK_1.7.1_96542h.tar.xz
 
-#RUN echo "I use this to make it get stuff from git again"
-
-RUN git clone https://github.com/mysablehats/OpenSimRT_data.git /srv/data
+RUN git clone https://github.com/mysablehats/OpenSimRT_data.git /srv/data && cd /srv/data && git checkout 3b0aa9d31fd1b86458ff3bcafa8d5ce3411391b5
 
 FROM stage1 AS stage2
 
@@ -97,8 +95,6 @@ ADD scripts/vim_install.bash /nvim
 RUN /nvim/vim_install.bash
 ADD tmux/.tmux.conf /etc/tmux
 
-RUN echo "I use this to make it get stuff from git again"
-
 # Set user and group
 ARG user=osruser1
 ARG group=osruser1
@@ -124,13 +120,13 @@ ENV OPENSIMRTDIR=opensimrt_core
 ADD cmake/Findsimbody.cmake /opt/dependencies
 ADD cmake/FindOpenSim.cmake /opt/dependencies
 
-RUN git clone https://github.com/opensimrt-ros/opensimrt_core.git ./$OPENSIMRTDIR -b feature/epoch-time-saving  && ln -s /srv/data $OPENSIMRTDIR/data # && echo "pulling opensimrt_core again"  
+RUN git clone https://github.com/opensimrt-ros/opensimrt_core.git ./$OPENSIMRTDIR -b feature/epoch-time-saving  && ln -s /srv/data $OPENSIMRTDIR/data && cd /catkin_opensim/src/$OPENSIMRTDIR && git checkout d5efbb262bf14b20facf292d9d9fb886f6ac7e3b && cd ..
 RUN sed 's@~@/opt@' ./$OPENSIMRTDIR/.github/workflows/env_variables >> /etc/profile.d/opensim_envs.sh
 
-RUN git clone https://github.com/opensimrt-ros/opensimrt_msgs.git -b devel && echo "pulling opensimrt_msgs again"
+RUN git clone https://github.com/opensimrt-ros/opensimrt_msgs.git -b devel && cd opensimrt_msgs && git checkout 182dd0a73a3d8a822c8112eab03879490edee09a && cd ..
 #RUN echo "I use this to make it get stuff from git again"
 
-RUN git clone https://github.com/opensimrt-ros/opensimrt_bridge.git -b devel && echo "pulling opensimrt_bridge again"
+RUN git clone https://github.com/opensimrt-ros/opensimrt_bridge.git -b devel && cd opensimrt_bridge && git checkout 96d388fdfcc538e7be30bb8680fec316b4b594bf && cd ..
 
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages/:$PYTHONPATH
 
@@ -164,8 +160,8 @@ RUN printf "source /catkin_ws/devel/setup.bash\nsource /catkin_opensim/devel/set
 
 ###############################################################################################################################################################################################################################################
 FROM stage2 AS stage3
-WORKDIR /catkin_opensim/src/opensimrt_core
-RUN git pull
+#WORKDIR /catkin_opensim/src/opensimrt_core
+#RUN git pull
 WORKDIR /catkin_opensim
 #RUN . /opt/ros/noetic/setup.sh && . /etc/profile.d/opensim_envs.sh && catkin_make ## it's not a session, so it wont load the exports...
 RUN /bin/catkin_build_opensimrt.bash
@@ -216,6 +212,7 @@ RUN pip3 install timeout_decorator libtmux sympy tqdm pandas
 WORKDIR ${HOME_DIR}
 RUN git clone https://github.com/mrocklin/multipolyfit.git \
 	&& cd multipolyfit \
+	&& git checkout a83e3241e07a32ef9298e288201bde5779f69538 \ 
 	&& pip3 install -e .
 
 WORKDIR /catkin_ws
