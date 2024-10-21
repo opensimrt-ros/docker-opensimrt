@@ -21,6 +21,25 @@ else
     EXTRA_OPTIONS=${EXTRA_OPTIONS}" -v $2:/catkin_ws "
 fi
 
+##first 2 arguments need to be the name of the run instance and the catkin_ws to be mounted.
+if [ -n "$1" ]; then
+	echo "shifting NAME: $1"
+	shift
+fi
+if [ -n "$1" ]; then
+	echo "shifting CATKIN_WS_DIR: $1"
+	shift
+fi
+
+## defining run command
+if [ -n "$1" ]; then
+	#RUN_COMMAND=$@
+	RUN_COMMAND="/bin/bash -l -c /catkin_ws/prediags.bash"
+	echo running command: $RUN_COMMAND
+else
+	RUN_COMMAND="/bin/bash -l"
+fi
+
 
 echo -en "\e]0;${THIS_WINDOW_TITLE}\a"
 
@@ -52,7 +71,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		-v $(pwd)/Data:/srv/host_data \
 		-v $(pwd)/tmux:/usr/local/bin/tmux_session \
 		-e OUTSIDEY_USER_ID=${USER_UID} \
-		$DOCKER_IMAGE_NAME /bin/bash -l
+		$DOCKER_IMAGE_NAME $RUN_COMMAND
 	## cleanup
 	if [ "$USE_HOTSPOT" = true ]; then
 		nmcli con down "${CONNECTION_NAME}"
