@@ -71,6 +71,9 @@ EXTRA_OPTIONS=""
 		## I actually need to grep it by the device, right, I am assuming your wlan dev has a w in its device name, hence the grep w, but it should be a variable..
 		myssid=$(nmcli -t -f name,device connection show --active | grep w | cut -d\: -f1)
 		nmcli con up "${CONNECTION_NAME}"
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-e USE_HOTSPOT=true "
+	else
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-e USE_HOTSPOT=false "
 	fi
 	if [ "$IS_ROOTLESS" = true ] || [ "$USE_BROADCAST_PACKAGES" = true ]; then
 		## broadcast packages are not forwarded by default by docker, so if you cannot use direct ip addressing, you will need to use network host
