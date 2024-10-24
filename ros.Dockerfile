@@ -236,5 +236,7 @@ RUN set -eux; \
 # verify that the binary works
 	gosu nobody true
 
+ADD scripts/log_defs.bash /usr/local/bin
+
 ADD scripts/entrypoint.sh /bin/entrypoint.sh 
 ENTRYPOINT [ "entrypoint.sh" ]

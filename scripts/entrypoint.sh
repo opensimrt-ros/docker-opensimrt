@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+source /usr/local/bin/log_defs.bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 #get_latest_local_branches.bash
 #catkin_build_ws.bash
@@ -10,7 +11,7 @@ export OPENSIMRTDIR=opensimrt_core
 ## check if XDG_RUNTIME_DIR exists and it is writable
 
 if [[ -d "$XDG_RUNTIME_DIR" && -w "$XDG_RUNTIME_DIR" ]]; then
-	echo "ok"
+	log_debug "XDG_RUNTIME_DIR is set correctly"
 else
 	#export XDG_RUNTIME_DIR=/tmp/`whoami`
 	export XDG_RUNTIME_DIR=/var/run/dbus
@@ -21,7 +22,7 @@ fi
 DOCKER_USER_NAME=rosopensimrt
 
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR
-gosu $DOCKER_USER_NAME:$DOCKER_USER_NAME dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+gosu $DOCKER_USER_NAME dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
 #dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
 
 # inspired by: https://github.com/redis/docker-library-redis/blob/master/Dockerfile.template& https://github.com/redis/docker-library-redis/blob/master/docker-entrypoint.sh
@@ -46,21 +47,22 @@ dirs_to_share=(
 
 cleanup()
 {
-	echo "attempting cleanup"
+	log_info "attempting cleanup"
+
 	for DIRECTORY in ${dirs_to_share[@]}; do
 		if [ -d "$DIRECTORY" ]; then
-  			echo "$DIRECTORY exists so i am changing its permissions."
+  			log_debug "$DIRECTORY exists so i am changing its permissions."
 			chown -R --from=$DOCKER_USER_NAME:$DOCKER_USER_NAME  $OUTSIDEY_USER_ID:$OUTSIDEY_USER_ID $DIRECTORY
 		fi
 	done
-	echo "permissions reset to $ACTUAL_USER_ID! "
+	log_debug "permissions reset to $ACTUAL_USER_ID! "
 }
 
 trap "cleanup" INT EXIT
 
 for DIRECTORY in ${dirs_to_share[@]}; do
 		if [ -d "$DIRECTORY" ]; then
-  			echo "$DIRECTORY exists so i am changing its permissions."
+  			log_debug "$DIRECTORY exists so i am changing its permissions."
 			chown -R --from=$OUTSIDEY_USER_ID:$OUTSIDEY_USER_ID  $DOCKER_USER_NAME:$DOCKER_USER_NAME $DIRECTORY
 		fi
 	done
