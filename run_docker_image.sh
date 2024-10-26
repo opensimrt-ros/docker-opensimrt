@@ -34,7 +34,7 @@ fi
 ## defining run command
 if [ -n "$1" ]; then
 	#RUN_COMMAND=$@
-	RUN_COMMAND="/bin/bash -l -c /catkin_ws/src/rosbiomech/diagnostics_schema/prediags.bash"
+	RUN_COMMAND="/bin/bash -l -c /catkin_ws/src/ros_biomech/diagnostics_schema/prediags.bash"
 	log_info running command: $RUN_COMMAND
 else
 	RUN_COMMAND="/bin/bash -l"
