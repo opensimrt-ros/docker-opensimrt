@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+mkdir -p -m 0700 /var/run/dbus && chown ${uid}:${gid} /var/run/dbus
+
+XDG_RUNTIME_DIR=/run/user/"${uid}"
+
 source /usr/local/bin/log_defs.bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 #get_latest_local_branches.bash

@@ -109,7 +109,6 @@ RUN groupadd -g ${gid} ${group}
 RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
 # Switch to user
 
-ENV XDG_RUNTIME_DIR=/run/user/"${uid}"
 
 WORKDIR /catkin_opensim/src
 
@@ -142,7 +141,7 @@ RUN sed -i "s/\(subprocess.Popen([^)]*\)/\1,universal_newlines=True/" /opt/ros/n
 ADD scripts/realsense_install.bash /usr/sbin/
 RUN bash /usr/sbin/realsense_install.bash
 
-RUN mkdir -p -m 0700 /var/run/dbus && chown ${uid}:${gid} /var/run/dbus && chown ${uid}:${gid} -R /catkin_opensim
+RUN chown ${uid}:${gid} -R /catkin_opensim
 
 USER ${uid}
 
