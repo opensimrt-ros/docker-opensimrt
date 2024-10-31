@@ -1,8 +1,11 @@
 set mouse=n
-syntax on
-
-let g:tex_flavor='xelatex'
-
+set encoding=UTF-8
+syntax enable
+set shell=/bin/bash
+set list
+set listchars=eol:⏎,tab:␉·,trail:␠,nbsp:⎵
+set guifont=DroidSansMono\ Nerd\ Font\ Mono\ 11
+set termguicolors
 call plug#begin()
 
 Plug 'preservim/nerdtree' |
@@ -10,74 +13,35 @@ Plug 'preservim/nerdtree' |
 	    \ Plug 'ryanoasis/vim-devicons'
 
 Plug 'rafi/awesome-vim-colorschemes'
-
-let g:NERDTreeFileExtensionHighlightFullName = 1
-
-" Start NERDTree. If a file is specified, move the cursor to its window.
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * NERDTree | if argc() > 0 || exists("s:std_in") | wincmd p | endif
-
-" Close the tab if NERDTree is the only window remaining in it.
-autocmd BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
 Plug 'tibabit/vim-templates'
-
-
 Plug 'ryanoasis/vim-devicons'
-set encoding=UTF-8
-let g:airline_powerline_fonts = 1
-
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plug 'christoomey/vim-tmux-navigator'
-
-" loading the plugin
-let g:webdevicons_enable = 1
-
-" adding the flags to NERDTree
-let g:webdevicons_enable_nerdtree = 1
-
-" adding to vim-airline's tabline
-let g:webdevicons_enable_airline_tabline = 1
-
-" adding to vim-airline's statusline
-let g:webdevicons_enable_airline_statusline = 1
-
-" adding to flagship's statusline
-let g:webdevicons_enable_flagship_statusline = 1
-
-syntax enable
-
-
-" Start NERDTree. If a file is specified, move the cursor to its window.
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * NERDTree | if argc() > 0 || exists("s:std_in") | wincmd p | endif
-
 Plug 'ycm-core/YouCompleteMe'
 Plug 'tpope/vim-fugitive'
 Plug 'junegunn/vim-easy-align'
 Plug 'https://github.com/junegunn/vim-github-dashboard.git'
-let g:github_dashboard = { 'username': 'frederico-klein', 'password': $GITHUB_TOKEN }
-
 Plug 'lervag/vimtex'
 "Plug 'LaTeX-Suite-aka-Vim-LaTeX'
 
 call plug#end()
+let g:tex_flavor='xelatex'
+let g:airline_powerline_fonts = 1
+let g:NERDTreeFileExtensionHighlightFullName = 1
 
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * NERDTree | if argc() > 0 || exists("s:std_in") | wincmd p | endif
+autocmd BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+let g:webdevicons_enable = 1
+let g:webdevicons_enable_nerdtree = 1
+let g:webdevicons_enable_airline_tabline = 1
+let g:webdevicons_enable_airline_statusline = 1
+let g:webdevicons_enable_flagship_statusline = 1
 let g:tmpl_search_paths = ['~/Templates']
-colo molokai
-
-function Test() range
-  echo system('echo '.shellescape(join(getline(a:firstline, a:lastline), "\n")).'| pbcopy')
-endfunction
-
-" transparent background
-hi Normal guibg=NONE ctermbg=NONE
-
-filetype plugin indent on
-set list
-set listchars=eol:⏎,tab:␉·,trail:␠,nbsp:⎵
-
+let g:github_dashboard = { 'username': $GITHUB_USER, 'password': $GITHUB_TOKEN }
 let g:vimtex_compiler_latexmk = { 
         \ 'executable' : 'latexmk',
         \ 'options' : [ 
@@ -87,8 +51,17 @@ let g:vimtex_compiler_latexmk = {
         \   '-interaction=nonstopmode',
         \ ],
         \}
+
 colorscheme molokai
-set guifont=DroidSansMono\ Nerd\ Font\ Mono\ 11
+
+function Test() range
+  echo system('echo '.shellescape(join(getline(a:firstline, a:lastline), "\n")).'| pbcopy')
+endfunction
+
+hi Normal guibg=NONE ctermbg=NONE
+
+filetype plugin indent on
+
 
 augroup tmux_ft
   au!
@@ -99,3 +72,4 @@ augroup launch_ft
   au!
   autocmd BufNewFile,BufRead *.launch   set syntax=xml
 augroup END
+
