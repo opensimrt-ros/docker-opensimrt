@@ -7,25 +7,25 @@ ENV IS_ROOTLESS=${IS_ROOTLESS}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install \
-	build-essential \
-	curl \
-	freeglut3-dev \
-	git \
-	libxi-dev \
-	libxmu-dev \
-	liblapack-dev \
-	doxygen \
-	gdb \
-	cmake \
-	wget \
-	xz-utils \
-	vim \
-	python \
-	v4l-utils \
-	catkin-lint \
-	iputils-ping \
 	alsa-utils \
-	pulseaudio \
+    	bindfs \
+	build-essential \
+	catkin-lint \
+	cmake \
+	curl \
+	doxygen \
+	freeglut3-dev \
+	gdb \
+	gir1.2-gstreamer-1.0 \
+	gir1.2-gst-plugins-base-1.0 \
+	git \
+	gosu \
+	gstreamer1.0-plugins-good \
+	gstreamer1.0-plugins-ugly \
+	gstreamer1.0-plugins-bad \
+	gstreamer1.0-libav \
+	gstreamer1.0-tools \
+	iputils-ping \
 	libasound2 \
 	libasound2-plugins \
 	libeigen3-dev \
@@ -33,7 +33,18 @@ RUN apt-get update && apt-get install \
 	libpython-all-dev \
 	libudev-dev \
 	libudev1 \
+	libxi-dev \
+	libxmu-dev \
+	liblapack-dev \
+	python \
+	python-gi \
+	python3-gi \
+	pulseaudio \
 	tmux \
+	v4l-utils \
+	vim \
+	wget \
+	xz-utils \
 	--yes
 
 RUN apt-get install \
@@ -89,26 +100,6 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && python3 -
 	pip3 install --upgrade pip && hash -r && pip3 install --upgrade pip && pip3 install protobuf==3.20.1 mock numpy pupil-labs-realtime-api nest_asyncio && \
 	pip3 install --ignore-installed PyYAML==5.3 
 
-RUN echo "reinstall neovim"
-ADD vim /nvim
-ADD scripts/vim_install.bash /nvim
-RUN /nvim/vim_install.bash
-ADD tmux/.tmux.conf /etc/tmux
-
-# Set user and group
-ARG user=osruser1
-ARG group=osruser1
-ARG uid=1000
-ARG gid=1000
-#ARG VIDEOGROUP=${VIDEOGROUP}
-#RUN groupadd -g $VIDEOGROUP video
-RUN groupadd -g ${gid} ${group}
-
-## opensimrtuser)
-## generate other password with $ openssl passwd -6 "somepassword"
-RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
-# Switch to user
-
 
 WORKDIR /catkin_opensim/src
 
@@ -141,21 +132,10 @@ RUN sed -i "s/\(subprocess.Popen([^)]*\)/\1,universal_newlines=True/" /opt/ros/n
 ADD scripts/realsense_install.bash /usr/sbin/
 RUN bash /usr/sbin/realsense_install.bash
 
-RUN chown ${uid}:${gid} -R /catkin_opensim
-
-USER ${uid}
-
-ENV HOME_DIR=/home/${user}
-ADD scripts/vim_configure.bash ${HOME_DIR}/
-RUN ~/vim_configure.bash
-
-ADD tmux/.tmux.conf ${HOME_DIR}/
-
 ADD scripts/build_opensimrt.bash /bin/catkin_build_opensimrt.bash
 
 ADD scripts/build_catkin_ws.bash /bin/catkin_build_ws.bash
 
-RUN printf "source /catkin_ws/devel/setup.bash\nsource /catkin_opensim/devel/setup.bash" >> ~/.bash_history
 
 ###############################################################################################################################################################################################################################################
 FROM stage2 AS stage3
@@ -164,8 +144,6 @@ FROM stage2 AS stage3
 WORKDIR /catkin_opensim
 #RUN . /opt/ros/noetic/setup.sh && . /etc/profile.d/opensim_envs.sh && catkin_make ## it's not a session, so it wont load the exports...
 RUN /bin/catkin_build_opensimrt.bash
-
-WORKDIR /catkin_opensim/src
 
 FROM stage3 AS final
 
@@ -183,6 +161,64 @@ EXPOSE 7000/tcp
 #port for insoles
 EXPOSE 9999
 
+#ADD tmux/ /usr/local/bin # moved to a volume
+
+ADD scripts/catkin.sh /bin/first_time_catkin_builder.sh
+
+## gets latest local environment
+ADD scripts/set_local_branches.bash /bin/set_local_branches.bash
+#ADD scripts/get_latest_local_branches.bash /bin/get_latest_local_branches.bash
+#RUN apt remove python -y
+#RUN apt install cowsay -y
+
+RUN pip3 install timeout_decorator libtmux sympy tqdm pandas
+
+WORKDIR ${HOME_DIR}
+RUN git clone https://github.com/mrocklin/multipolyfit.git \
+	&& cd multipolyfit \
+	&& git checkout a83e3241e07a32ef9298e288201bde5779f69538 \ 
+	&& pip3 install -e .
+
+ADD scripts/banners /etc/banners
+ADD scripts/banners/welcome.sh /etc/profile.d/welcome.sh
+
+RUN set -eux; \
+# verify that the binary works
+	gosu nobody true
+
+ADD scripts/log_defs.bash /usr/local/bin
+
+ADD scripts/entrypoint.sh /bin/entrypoint.sh 
+
+# Set user and group
+ARG user=osruser1
+ARG group=osruser1
+ARG uid=1000
+ARG gid=1000
+#ARG VIDEOGROUP=${VIDEOGROUP}
+#RUN groupadd -g $VIDEOGROUP video
+RUN groupadd -g ${gid} ${group}
+
+## opensimrtuser)
+## generate other password with $ openssl passwd -6 "somepassword"
+RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
+# Switch to user
+
+RUN chown ${uid}:${gid} -R /catkin_opensim
+
+
+RUN echo "reinstall neovim"
+ADD vim /nvim
+ADD scripts/vim_install.bash /nvim
+RUN /nvim/vim_install.bash
+ADD tmux/.tmux.conf /etc/tmux
+
+USER ${uid}
+
+ENV HOME_DIR=/home/${user}
+ADD scripts/vim_configure.bash ${HOME_DIR}/
+RUN ~/vim_configure.bash
+
 ##BLING
 ADD scripts/bash_git.bash ${HOME_DIR}/.bash_git
 ADD scripts/bashbar.bash  ${HOME_DIR}/.bash_bar
@@ -194,48 +230,12 @@ RUN echo "source ~/.bash_git" >> ~/.bashrc && \
 
 ADD scripts/create_bashrcs.bash ${HOME_DIR}/.create_bashrcs.sh
 RUN bash ~/.create_bashrcs.sh
-#ADD tmux/ /usr/local/bin # moved to a volume
 
-ADD scripts/catkin.sh /bin/first_time_catkin_builder.sh
+ADD tmux/.tmux.conf ${HOME_DIR}/
 
-## gets latest local environment
-ADD scripts/set_local_branches.bash /bin/set_local_branches.bash
-#ADD scripts/get_latest_local_branches.bash /bin/get_latest_local_branches.bash
-WORKDIR /catkin_ws
-#RUN apt remove python -y
-#RUN apt install cowsay -y
-
+RUN printf "source /catkin_ws/devel/setup.bash\nsource /catkin_opensim/devel/setup.bash" >> ~/.bash_history
 RUN rosdep update
-RUN pip3 install timeout_decorator libtmux sympy tqdm pandas
-
-WORKDIR ${HOME_DIR}
-RUN git clone https://github.com/mrocklin/multipolyfit.git \
-	&& cd multipolyfit \
-	&& git checkout a83e3241e07a32ef9298e288201bde5779f69538 \ 
-	&& pip3 install -e .
-
-WORKDIR /catkin_ws
-
-ADD scripts/banners /etc/banners
-ADD scripts/banners/welcome.sh /etc/profile.d/welcome.sh
 
 USER root
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y gosu; \
-	apt install -y python-gi python3-gi \
-    gstreamer1.0-tools \
-    gir1.2-gstreamer-1.0 \
-    gir1.2-gst-plugins-base-1.0 \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-ugly \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-libav; \
-	rm -rf /var/lib/apt/lists/*; \
-# verify that the binary works
-	gosu nobody true
 
-ADD scripts/log_defs.bash /usr/local/bin
-
-ADD scripts/entrypoint.sh /bin/entrypoint.sh 
 ENTRYPOINT [ "entrypoint.sh" ]

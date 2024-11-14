@@ -25,8 +25,9 @@ USE_SOUND=true # to have the wav files play correctly
 USE_CAMERAS=true
 
 USERNAME=rosopensimrt
-USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=908
-USER_GID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=908
+## I don't want to spend my time debugging how to use pulse audio cookies anymore...
+USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=$(id -u)
+USER_GID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=$(id -u)
 COMPLETE_BUILD=true
 SUFFIX=_complete
 
@@ -101,8 +102,12 @@ EXTRA_OPTIONS=""
 	if [ "$USE_SOUND" = true ]; then
 		
 		EXTRA_OPTIONS=${EXTRA_OPTIONS}"--device=/dev/snd:/dev/snd "
-		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-e PULSE_SERVER=unix:/run/user/${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER}/pulse/native "
-		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /run/user/${USER_UID}/pulse:/run/user/${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER}/pulse "
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-e PULSE_SERVER=unix:/run/user/${USER_UID}/pulse/native "
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /run/user/${USER_UID}/pulse:/run/user/${USER_UID}/pulse "
+		#### this will failt with rootless though
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /var/run/dbus:/var/run/dbus "
+		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /run/user/${USER_UID}/bus:/run/user/${USER_UID}/bus "
+		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /lib/modules:/lib/modules --privileged "
 	fi
 	if [ "$USE_REALSENSE" = true ]; then
 		#IIRC this is to share the realsense camera

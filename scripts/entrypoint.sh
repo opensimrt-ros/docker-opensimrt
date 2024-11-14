@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-mkdir -p -m 0700 /var/run/dbus && chown ${uid}:${gid} /var/run/dbus
+## I should get this from options//
+DOCKER_USER_NAME=rosopensimrt
+DOCKER_UID=908
 
-XDG_RUNTIME_DIR=/run/user/"${uid}"
+#mkdir -p -m 0700 /var/run/dbus && chown $DOCKER_USER_NAME:$DOCKER_USER_NAME /var/run/dbus
+
+#mkdir -p -m 0700 /run/user/$DOCKER_UID && chown $DOCKER_USER_NAME:$DOCKER_USER_NAME /run/user/$DOCKER_UID
+
+#ls /lib/modules
+#modprobe fuse
+#bindfs -o nonempty --force-user=$DOCKER_USER_NAME --force-group=$DOCKER_USER_NAME /run/user/$OUTSIDEY_USER_ID /run/user/$DOCKER_UID
+
+
+#XDG_RUNTIME_DIR=/run/user/"$DOCKER_UID"
 
 source /usr/local/bin/log_defs.bash
 source /opt/ros/$ROS_DISTRO/setup.bash
@@ -17,16 +28,14 @@ export OPENSIMRTDIR=opensimrt_core
 if [[ -d "$XDG_RUNTIME_DIR" && -w "$XDG_RUNTIME_DIR" ]]; then
 	log_debug "XDG_RUNTIME_DIR is set correctly"
 else
+	log_debug "no XDG_RUNTIME_DIR thing"
 	#export XDG_RUNTIME_DIR=/tmp/`whoami`
-	export XDG_RUNTIME_DIR=/var/run/dbus
+	#export XDG_RUNTIME_DIR=/run/user/${DOCKER_UID}/bus
 	#mkdir -p $XDG_RUNTIME_DIR
 fi
 
-## I should get this from options//
-DOCKER_USER_NAME=rosopensimrt
-
-export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR
-gosu $DOCKER_USER_NAME dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+#export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR
+#gosu $DOCKER_USER_NAME dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
 #dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
 
 # inspired by: https://github.com/redis/docker-library-redis/blob/master/Dockerfile.template& https://github.com/redis/docker-library-redis/blob/master/docker-entrypoint.sh
@@ -45,6 +54,7 @@ dirs_to_share=(
 "/srv/host_data"
 "/catkin_ws"
 "/tmp/.X11-unix"
+""
 )
 #"/dev/snd"
 #"/dev/dri"
