@@ -238,4 +238,6 @@ RUN rosdep update
 
 USER root
 
+WORKDIR /catkin_ws
+
 ENTRYPOINT [ "entrypoint.sh" ]

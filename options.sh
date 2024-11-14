@@ -108,6 +108,7 @@ EXTRA_OPTIONS=""
 		EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /var/run/dbus:/var/run/dbus "
 		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /run/user/${USER_UID}/bus:/run/user/${USER_UID}/bus "
 		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /lib/modules:/lib/modules --privileged "
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"--cap-add SYS_ADMIN --device /dev/fuse "
 	fi
 	if [ "$USE_REALSENSE" = true ]; then
 		#IIRC this is to share the realsense camera
