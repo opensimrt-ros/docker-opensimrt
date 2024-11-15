@@ -12,3 +12,6 @@
 	path = opensim_docker
 	url = https://github.com/opensimrt-ros/opensim_docker.git
 	pushurl = git@github.com:opensimrt-ros/opensim_docker.git
+[submodule "vim"]
+	path = vim
+	url = git@github.com:opensimrt-ros/vim.git
