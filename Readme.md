@@ -72,7 +72,7 @@ Currently the visualizations (either from rViz or from OpenSim) are using X, so 
 
 ## Windows Users:
 
-To show graphics make sure you have either Xming or vcxsrv installed and running. 
+To show graphics make sure you have either [Xming](http://www.straightrunning.com/XmingNotes/) or [vcxsrv](https://sourceforge.net/projects/vcxsrv/) installed and running. 
 
 Xming and vcxsrv will be running on the WSL ip address of your computer. You can check this IP by either opening a CMD (windows key + R then type cmd, in command prompt type ipconfig and use the IP from WSL) or by checking the log file from xming/ vcxsrv.
 
