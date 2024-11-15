@@ -84,9 +84,25 @@ Or whatever your ip is.
 
 ### Known issues
 
-Showing OpenSim graphics in Linux uses X forwarding with hardware acceleration. This is not available in Windows (as far as I know) and may the reason why running the Docker inside Windows has such slow performance.
+Using windows with this system is a bit more involved, so some things may not work out of the box.
 
-Also WSL is strange and you need to set firewall permissions and maybe routing tables properly to use the IMUs with docker and WSL. 
+#### docker Buildx "ERROR: BuildKit is enabled but the buildx component is missing or broken" error
+
+This means that docker isn't working properly, because you should have buildkit working by default. 
+
+From [this stackoverflow answer](https://stackoverflow.com/questions/75739545/docker-buildx-error-buildkit-is-enabled-but-the-buildx-component-is-missing-or), you can try installing docker-buildx or docker-buildx-plugin. But it is easier to just use the fallback old build style. You can do this by specifying 
+
+    ./build_docker_image.sh --disable_buildx
+
+#### Visuals or rostopic hz doesn't show 100 fps/ 100hz messages
+
+Showing OpenSim graphics in Linux uses X forwarding with hardware acceleration. This is not available in Windows (as far as I know) and may the reason why running the Docker inside Windows has such slow performance. There might be more differences in how things run networkwise as well in play here. 
+
+#### I cannot connect to some sensors using sockets or usb
+
+WSL is strange and you need to set firewall permissions and maybe routing tables properly to use the IMUs with docker and WSL. While this is certainly doable, we won't help with getting this sort of setup working. Google is your friend here.
+
+I am not 100 percent sure how it deals with other devices that may require direct hardware control. I know it doesnt really have a kernel, so insmod is out of the question, therefore we can also assume that V4L or alsa will most likely not work. In this case it is maybe easier to accept the performance penalty and use a virtual machine that allows you to use driver filters.
 
 ## Mac Users:
 

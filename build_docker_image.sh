@@ -17,7 +17,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		exit
 	fi
 	
-	options=$(getopt -o lc --longoptions username:,user_id:,group_id:,complete_build,build_stages_separately -- "$@")
+	options=$(getopt -o lc --longoptions username:,user_id:,group_id:,complete_build,build_stages_separately,disable_buildx -- "$@")
 	[ $? -eq 0 ] || { 
 	    echo "Incorrect options provided"
 	    exit 1
@@ -54,6 +54,9 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	    --build_stages_separately)
 		BUILD_STAGES=true
 		;;
+	    --disable_buildx)
+		BUILDX=0
+		;;
 	    --)
 		shift
 		## after this there will be the options for docker build. the second one
@@ -72,9 +75,11 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	else
 		START_WITH_IMAGE=ros:noetic-ros-base 
 	fi
-	
-	COMMON_OPTIONS="--progress=tty \
-			--network=host \
+	COMMON_OPTIONS=""
+	if [ "$BUILDX" = 1 ]; then
+		COMMON_OPTIONS="--progress=tty "
+	fi
+	COMMON_OPTIONS=${COMMON_OPTIONS}"--network=host \
 			--build-arg user=$USERNAME \
 			--build-arg group=$USERNAME \
 			--build-arg uid=${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER} \
@@ -88,38 +93,38 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		cd opensim_docker
 		if [ "$BUILD_STAGES" = true ]; then
 			echo "Building opensim docker by stage"
-			DOCKER_BUILDKIT=1 docker build . -f Dockerfile --target=dependencies -t ${USERNAME}/osrt-1:$BRANCH $COMMON_OPTIONS
-			DOCKER_BUILDKIT=1 docker build . -f Dockerfile --target=stage2 -t ${USERNAME}/osrt-2:$BRANCH $COMMON_OPTIONS
-			DOCKER_BUILDKIT=1 docker build . -f Dockerfile --target=stage3 -t ${USERNAME}/osrt-3:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=dependencies -t ${USERNAME}/osrt-1:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage2 -t ${USERNAME}/osrt-2:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage3 -t ${USERNAME}/osrt-3:$BRANCH $COMMON_OPTIONS
 		fi
-			DOCKER_BUILDKIT=1 docker build . -f Dockerfile -t ${USERNAME}/osrt-full:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile -t ${USERNAME}/osrt-full:$BRANCH $COMMON_OPTIONS
 		cd ..
 	fi
 	if [ "$BUILD_STAGES" = true ]; then
 		echo "Building opensimrt by stage"
-		DOCKER_BUILDKIT=1 docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt1${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt1${SUFFIX}:$BRANCH  \
 			--target=stage1 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=1 docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt2${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt2${SUFFIX}:$BRANCH  \
 			--target=stage2 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=1 docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt3${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt3${SUFFIX}:$BRANCH  \
 			--target=stage3 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=1 docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt4${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt4${SUFFIX}:$BRANCH  \
 			--target=final \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
 	fi
 	echo "Building main opensimrt image."
-	DOCKER_BUILDKIT=1 docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt${SUFFIX}:$BRANCH  \
+	DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt${SUFFIX}:$BRANCH  \
 		--build-arg start_with_image=${START_WITH_IMAGE} \
 		--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 		$COMMON_OPTIONS

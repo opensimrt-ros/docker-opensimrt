@@ -33,7 +33,7 @@ SUFFIX=_complete
 
 USE_REALSENSE=true
 
-
+BUILDX=1
 ####SETUP
 
 source scripts/log_defs.bash
