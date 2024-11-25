@@ -1,5 +1,7 @@
 # docker opensimrt
 
+[ROS OpenSimRT](images/rosopensimrt_cons.png)
+
 ![Docker Build Status](https://github.com/opensimrt-ros/docker-opensimrt/actions/workflows/docker-image.yml/badge.svg?branch=feature/newest_opensim)
 
 This repository contains scripts for building and launching OpenSimRT with a ROS interface. 
@@ -7,6 +9,12 @@ This repository contains scripts for building and launching OpenSimRT with a ROS
 While it was meant to be used on x86\_64 Linux, it may be possible to use other Docker for Windows or Mac (see below). 
 
 To use it you need to have [docker installed](https://docs.docker.com/get-docker/). We recommend install docker in a rootfull way or the volume mounts may not work by default (it is easy to change the permissions of the folders with the root\_instance.sh script).
+
+# System Overview:
+
+[Full System](images/system_complete.png)
+
+A simplified diagram of the complete system as implemented is shown above. 
 
 # Newest instructions:
 
