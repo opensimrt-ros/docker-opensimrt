@@ -1,6 +1,6 @@
 # docker opensimrt
 
-[ROS OpenSimRT](images/rosopensimrt_cons.png)
+![ROS OpenSimRT](images/rosopensimrt_cons.png)
 
 ![Docker Build Status](https://github.com/opensimrt-ros/docker-opensimrt/actions/workflows/docker-image.yml/badge.svg?branch=feature/newest_opensim)
 
@@ -12,7 +12,7 @@ To use it you need to have [docker installed](https://docs.docker.com/get-docker
 
 # System Overview:
 
-[Full System](images/system_complete.png)
+![Full System](images/system_complete.png)
 
 A simplified diagram of the complete system as implemented is shown above. 
 
