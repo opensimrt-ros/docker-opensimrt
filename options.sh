@@ -32,7 +32,7 @@ COMPLETE_BUILD=true
 SUFFIX=_complete
 
 USE_REALSENSE=true
-
+USE_N_CORES=$(nproc)
 BUILDX=1
 ####SETUP
 

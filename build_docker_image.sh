@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 source options.sh
 if [ "$(uname)" == "Darwin" ]; then
 	# Do something under Mac OS X platform
@@ -14,10 +15,10 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	# I can only run in x86_64 systems, so I should also warn the person.
 	if [ "$(uname -m)" != "x86_64" ]; then
 		echo "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
-		exit
+		#exit
 	fi
 	
-	options=$(getopt -o lc --longoptions username:,user_id:,group_id:,complete_build,build_stages_separately,disable_buildx -- "$@")
+	options=$(getopt -o lc --longoptions username:,user_id:,group_id:,complete_build,build_stages_separately,disable_buildx,single_core -- "$@")
 	[ $? -eq 0 ] || { 
 	    echo "Incorrect options provided"
 	    exit 1
@@ -57,6 +58,9 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	    --disable_buildx)
 		BUILDX=0
 		;;
+	    --single_core)
+		USE_N_CORES=1
+		;;
 	    --)
 		shift
 		## after this there will be the options for docker build. the second one
@@ -85,6 +89,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 			--build-arg uid=${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER} \
 			--build-arg gid=${USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER} \
 			--build-arg IS_ROOTLESS=$IS_ROOTLESS \
+			--build-arg USE_N_CORES=$USE_N_CORES \
 			$@
 	"
 

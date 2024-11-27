@@ -130,7 +130,7 @@ RUN ln -s libpython3.8.so.1.0 libpython3.6m.so.1.0
 RUN sed -i "s/\(subprocess.Popen([^)]*\)/\1,universal_newlines=True/" /opt/ros/noetic/lib/tf/view_frames 
 
 ADD scripts/realsense_install.bash /usr/sbin/
-RUN bash /usr/sbin/realsense_install.bash
+	#RUN bash /usr/sbin/realsense_install.bash
 
 ADD scripts/build_opensimrt.bash /bin/catkin_build_opensimrt.bash
 
