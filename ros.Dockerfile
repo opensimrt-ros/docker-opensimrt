@@ -143,7 +143,7 @@ FROM stage2 AS stage3
 #RUN git pull
 WORKDIR /catkin_opensim
 #RUN . /opt/ros/noetic/setup.sh && . /etc/profile.d/opensim_envs.sh && catkin_make ## it's not a session, so it wont load the exports...
-RUN /bin/catkin_build_opensimrt.bash
+#RUN /bin/catkin_build_opensimrt.bash
 
 FROM stage3 AS final
 
@@ -210,14 +210,14 @@ RUN chown ${uid}:${gid} -R /catkin_opensim
 RUN echo "reinstall neovim"
 ADD vim /nvim
 ADD scripts/vim_install.bash /nvim
-RUN /nvim/vim_install.bash
+#RUN /nvim/vim_install.bash
 ADD tmux/.tmux.conf /etc/tmux
 
 USER ${uid}
 
 ENV HOME_DIR=/home/${user}
 ADD scripts/vim_configure.bash ${HOME_DIR}/
-RUN ~/vim_configure.bash
+#RUN ~/vim_configure.bash
 
 ##BLING
 ADD scripts/bash_git.bash ${HOME_DIR}/.bash_git
