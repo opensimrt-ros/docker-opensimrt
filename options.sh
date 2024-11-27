@@ -9,7 +9,7 @@
 ######################################################################
 
 #BRANCH=latest
-
+ARCH=$(uname -m)
 USE_ANDROID_VM=false #true
 BT_DONGLE_VENDOR_ID=0bda:8771
 
@@ -148,5 +148,5 @@ fi
 #VIDEOGROUP=$(getent group video | awk -F: '{print $3}')
 
 #DOCKER_IMAGE_NAME=rosopensimrt/opensim-rt:devel-all
-DOCKER_IMAGE_NAME=${USERNAME}/opensim-rt${SUFFIX}:$BRANCH 
+DOCKER_IMAGE_NAME=${USERNAME}/opensim-rt${SUFFIX}-$ARCH:$BRANCH 
 

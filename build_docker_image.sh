@@ -4,19 +4,11 @@ source options.sh
 if [ "$(uname)" == "Darwin" ]; then
 	# Do something under Mac OS X platform
 	# I can only run in x86_64 systems, so I should also warn the person.
-	if [ "$(uname -m)" != "x86_64" ]; then
-		echo "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
-		exit
-	fi
-	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt:$BRANCH $@
+	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt-$ARCH:$BRANCH $@
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	# Do something under GNU/Linux platform
 	# I can only run in x86_64 systems, so I should also warn the person.
-	if [ "$(uname -m)" != "x86_64" ]; then
-		echo "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
-		#exit
-	fi
 	
 	options=$(getopt -o lc --longoptions username:,user_id:,group_id:,complete_build,build_stages_separately,disable_buildx,single_core -- "$@")
 	[ $? -eq 0 ] || { 
@@ -74,7 +66,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 
 	if [ "$COMPLETE_BUILD" = true ]; then
 
-		START_WITH_IMAGE=${USERNAME}/osrt-full:$BRANCH 
+		START_WITH_IMAGE=${USERNAME}/osrt-full-$ARCH:$BRANCH 
 		#START_WITH_IMAGE=${USERNAME}/osrt-full:latest 
 	else
 		START_WITH_IMAGE=ros:noetic-ros-base 
@@ -98,49 +90,49 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 		cd opensim_docker
 		if [ "$BUILD_STAGES" = true ]; then
 			echo "Building opensim docker by stage"
-			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=dependencies -t ${USERNAME}/osrt-1:$BRANCH $COMMON_OPTIONS
-			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage2 -t ${USERNAME}/osrt-2:$BRANCH $COMMON_OPTIONS
-			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage3 -t ${USERNAME}/osrt-3:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=dependencies -t ${USERNAME}/osrt-1-$ARCH:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage2 -t ${USERNAME}/osrt-2-$ARCH:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile --target=stage3 -t ${USERNAME}/osrt-3-$ARCH:$BRANCH $COMMON_OPTIONS
 		fi
-			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile -t ${USERNAME}/osrt-full:$BRANCH $COMMON_OPTIONS
+			DOCKER_BUILDKIT=$BUILDX docker build . -f Dockerfile -t ${USERNAME}/osrt-full-$ARCH:$BRANCH $COMMON_OPTIONS
 		cd ..
 	fi
 	if [ "$BUILD_STAGES" = true ]; then
 		echo "Building opensimrt by stage"
-		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt1${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt1${SUFFIX}-$ARCH:$BRANCH  \
 			--target=stage1 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt2${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt2${SUFFIX}-$ARCH:$BRANCH  \
 			--target=stage2 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt3${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt3${SUFFIX}-$ARCH:$BRANCH  \
 			--target=stage3 \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
-		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt4${SUFFIX}:$BRANCH  \
+		DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt4${SUFFIX}-$ARCH:$BRANCH  \
 			--target=final \
 			--build-arg start_with_image=${START_WITH_IMAGE} \
 			--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 			$COMMON_OPTIONS
 	fi
 	echo "Building main opensimrt image."
-	DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt${SUFFIX}:$BRANCH  \
+	DOCKER_BUILDKIT=$BUILDX docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt${SUFFIX}-$ARCH:$BRANCH  \
 		--build-arg start_with_image=${START_WITH_IMAGE} \
 		--build-arg download_precompiled_opensim=${COMPLETE_BUILD} \
 		$COMMON_OPTIONS
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
 	# Do something under 32 bits Windows NT platform
-	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt:$BRANCH $@
+	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt-$ARCH:$BRANCH $@
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
 	# Do something under 64 bits Windows NT platform
-	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt:$BRANCH $@
+	docker build . -f ros.Dockerfile -t ${USERNAME}/opensim-rt-$ARCH:$BRANCH $@
 
 fi
 

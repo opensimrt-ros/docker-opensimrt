@@ -1,4 +1,4 @@
-#!/bin/bash
+	#!/bin/bash
 source options.sh
 NAME=${1:-opensimrt_ros_}
 if [ -z "$2" ] || [ ! -d "$2" ]
@@ -45,11 +45,6 @@ echo -en "\e]0;${THIS_WINDOW_TITLE}\a"
 
 if [ "$(uname)" == "Darwin" ]; then
 	# Do something under Mac OS X platform
-	# I can only run in x86_64 systems, so I should also warn the person.
-	if [ "$(uname -m)" != "x86_64" ]; then
-		log_warn "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
-		exit
-	fi
 	docker run --rm -it \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 		--name=$NAME \
@@ -57,13 +52,6 @@ if [ "$(uname)" == "Darwin" ]; then
 		$DOCKER_IMAGE_NAME
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	# Do something under GNU/Linux platform
-
-	# I can only run in x86_64 systems, so I should also warn the person.
-	if [ "$(uname -m)" != "x86_64" ]; then
-		log_warn "The only currently supported architecture is x86_64. You need to change the ros.Dockerfile to compile everything with this architecture ($(uname -m))."
-		exit
-	fi
-	
 	log_debug $EXTRA_OPTIONS
 	docker run --rm -it $EXTRA_OPTIONS \
 		-e WINDOW_TITLE="${THIS_WINDOW_TITLE}" \
