@@ -3,7 +3,7 @@ set -e
 
 ## I should get this from options//
 DOCKER_USER_NAME=rosopensimrt
-DOCKER_UID=908
+DOCKER_UID=1000
 
 #mkdir -p -m 0700 /var/run/dbus && chown $DOCKER_USER_NAME:$DOCKER_USER_NAME /var/run/dbus
 

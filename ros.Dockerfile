@@ -110,7 +110,7 @@ ENV OPENSIMRTDIR=opensimrt_core
 ADD cmake/Findsimbody.cmake /opt/dependencies
 ADD cmake/FindOpenSim.cmake /opt/dependencies
 
-RUN git clone https://github.com/opensimrt-ros/opensimrt_core.git ./$OPENSIMRTDIR -b feature/epoch-time-saving  && ln -s /srv/data $OPENSIMRTDIR/data && cd /catkin_opensim/src/$OPENSIMRTDIR && git checkout d5efbb262bf14b20facf292d9d9fb886f6ac7e3b && cd ..
+RUN git clone https://github.com/opensimrt-ros/opensimrt_core.git ./$OPENSIMRTDIR -b aarch64  && ln -s /srv/data $OPENSIMRTDIR/data && cd /catkin_opensim/src/$OPENSIMRTDIR && git checkout 95f62e7c8a9608f43c8aad71dacb9d567b5afa7a && cd ..
 RUN sed 's@~@/opt@' ./$OPENSIMRTDIR/.github/workflows/env_variables >> /etc/profile.d/opensim_envs.sh
 
 RUN git clone https://github.com/opensimrt-ros/opensimrt_msgs.git -b devel && cd opensimrt_msgs && git checkout 182dd0a73a3d8a822c8112eab03879490edee09a && cd ..
@@ -143,7 +143,7 @@ FROM stage2 AS stage3
 #RUN git pull
 WORKDIR /catkin_opensim
 #RUN . /opt/ros/noetic/setup.sh && . /etc/profile.d/opensim_envs.sh && catkin_make ## it's not a session, so it wont load the exports...
-#RUN /bin/catkin_build_opensimrt.bash
+RUN /bin/catkin_build_opensimrt.bash
 
 FROM stage3 AS final
 
@@ -198,10 +198,16 @@ ARG gid=1000
 #ARG VIDEOGROUP=${VIDEOGROUP}
 #RUN groupadd -g $VIDEOGROUP video
 RUN groupadd -g ${gid} ${group}
+ARG INPUTGROUP=102
+#RUN groupmod -g $INPUTGROUP input
+
+#&& \
+	#find / -gid OLDGID ! -type l -exec chgrp NEWGID {} \;
 
 ## opensimrtuser)
 ## generate other password with $ openssl passwd -6 "somepassword"
-RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
+RUN useradd -l -u ${uid} -g ${gid} -G sudo,audio,video,input,$INPUTGROUP -s /bin/bash -m -p '$6$WsqPSjlIKm37devi$U3hwXWYilUOFYRH8EE7FoStlfCfeK0dJY3.fdEWKFJkDGMg6p9YQIsycpcv7OM4SFSdz3D0sfEGyrY8reNSgu1' ${user}
+
 # Switch to user
 
 RUN chown ${uid}:${gid} -R /catkin_opensim
@@ -210,14 +216,14 @@ RUN chown ${uid}:${gid} -R /catkin_opensim
 RUN echo "reinstall neovim"
 ADD vim /nvim
 ADD scripts/vim_install.bash /nvim
-#RUN /nvim/vim_install.bash
+RUN /nvim/vim_install.bash
 ADD tmux/.tmux.conf /etc/tmux
 
 USER ${uid}
 
 ENV HOME_DIR=/home/${user}
 ADD scripts/vim_configure.bash ${HOME_DIR}/
-#RUN ~/vim_configure.bash
+RUN ~/vim_configure.bash
 
 ##BLING
 ADD scripts/bash_git.bash ${HOME_DIR}/.bash_git
@@ -239,5 +245,7 @@ RUN rosdep update
 USER root
 
 WORKDIR /catkin_ws
+ADD scripts/rasppi.sh /bin/setup_raspi.sh
+RUN /bin/setup_raspi.sh
 
 ENTRYPOINT [ "entrypoint.sh" ]

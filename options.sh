@@ -28,10 +28,16 @@ USERNAME=rosopensimrt
 ## I don't want to spend my time debugging how to use pulse audio cookies anymore...
 USER_ID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=$(id -u)
 USER_GID_THAT_WAS_USED_TO_BUILD_THIS_DOCKER=$(id -u)
+#audio and video work, so i didnt have to do this
+INPUTGROUP=$(getent group input | cut -d: -f3)
+#echo $INPUTGROUP
+#exit
+
 COMPLETE_BUILD=true
 SUFFIX=_complete
 
-USE_REALSENSE=true
+USE_RASPPI=true
+USE_REALSENSE=false
 USE_N_CORES=$(nproc)
 BUILDX=1
 ####SETUP
@@ -109,6 +115,33 @@ EXTRA_OPTIONS="--ipc host "
 		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /run/user/${USER_UID}/bus:/run/user/${USER_UID}/bus "
 		#EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v /lib/modules:/lib/modules --privileged "
 		EXTRA_OPTIONS=${EXTRA_OPTIONS}"--cap-add SYS_ADMIN --device /dev/fuse "
+	fi
+	if [ "$USE_RASPPI" = true ]; then
+		## idk if i need to share all of them. if so, then just do like the video thing
+		for i in /sys/class/graphics/fb*
+		do
+			echo $i
+			if [ -f $i/name ]; then
+				log_debug exists
+				if grep -Fq "RPi-Sense FB" $i/name ; then
+					EXTRA_OPTIONS=${EXTRA_OPTIONS}"-v $i:$i "
+				fi
+			fi
+		done
+		log_debug "did i find the hat?" $EXTRA_OPTIONS
+		#exit
+		##ffs how many devices does it add?
+		## this rubbish, i need to look into this filw /usr/local/lib/python3.8/dist-packages/sense_hat/stick.py and check the correct way, compare the thing and add the correct event...
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"--device=/dev/input/event6:/dev/input/event6 "
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"--device=/dev/fb0:/dev/fb0 "
+		I2CS="/dev/i2c*"
+		I2C=""
+		for i in $I2CS
+			do
+				I2C="--device=$i:$i $I2C"
+			done
+		log_debug $I2C
+		EXTRA_OPTIONS=${EXTRA_OPTIONS}"$I2C "
 	fi
 	if [ "$USE_REALSENSE" = true ]; then
 		#IIRC this is to share the realsense camera

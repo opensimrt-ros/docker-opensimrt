@@ -5,7 +5,7 @@ cd /catkin_opensim
 
 #source src/$OPENSIMRTDIR/env.sh 
 . /opt/ros/noetic/setup.sh
-catkin_make -j10 \
+catkin_make -j`nproc` \
             -DCMAKE_BUILD_TYPE=Release \
             -DCONTINUOUS_INTEGRATION=OFF \
             -DBUILD_TESTING=ON \
@@ -14,5 +14,5 @@ catkin_make -j10 \
             -DBUILD_MOMENT_ARM=ON \
             -DBUILD_IMU=OFF \
             -DBUILD_UIMU=ON \
-            -DBUILD_VICON=ON \
+            -DBUILD_VICON=OFF \
 	    "$@"
