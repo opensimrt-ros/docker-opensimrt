@@ -10,6 +10,20 @@ While it was meant to be used on x86\_64 Linux, it may be possible to use other 
 
 To use it you need to have [docker installed](https://docs.docker.com/get-docker/). We recommend install docker in a rootfull way or the volume mounts may not work by default (it is easy to change the permissions of the folders with the root\_instance.sh script).
 
+Please cite as:
+
+    @misc{klein2025realtimefullchainwearablesensorbased,
+          title={A real-time full-chain wearable sensor-based musculoskeletal simulation: an OpenSim-ROS Integration}, 
+          author={Frederico Belmonte Klein and Zhaoyuan Wan and Huawei Wang and Ruoli Wang},
+          year={2025},
+          eprint={2507.20049},
+          archivePrefix={arXiv},
+          primaryClass={cs.RO},
+          url={https://arxiv.org/abs/2507.20049}, 
+    }
+
+
+
 # System Overview:
 
 ![Full System](images/system_complete.png)
